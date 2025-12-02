@@ -5,7 +5,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ApiClient {
 
-    private static final String BASE_URL = "https://fakestores.vercel.app/";
+    private static final String BASE_URL = "https://fakestoreapi.com/";
 
     private static Retrofit retrofit = null;
 

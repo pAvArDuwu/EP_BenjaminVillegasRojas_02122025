@@ -19,7 +19,7 @@ public class SplashActivity extends AppCompatActivity {
         setContentView(R.layout.activity_splash);
 
         ImageView splashGif = findViewById(R.id.splashGif);
-        Glide.with(this).asGif().load(R.drawable.splash_animation).into(splashGif);
+        Glide.with(this).asGif().load(R.drawable.download).into(splashGif);
 
         new Handler().postDelayed(new Runnable() {
             @Override

@@ -3,8 +3,10 @@ package com.example.ep_benjaminvillegasrojas_02122025;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -12,6 +14,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
+import java.util.ArrayList;
 import java.util.List;
 
 import retrofit2.Call;
@@ -22,6 +27,8 @@ public class MainActivity extends AppCompatActivity {
 
     private RecyclerView productsRecyclerView;
     private ProductAdapter productAdapter;
+    private ProgressBar progressBar;
+    private TextView messageTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,10 +36,21 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         productsRecyclerView = findViewById(R.id.productsRecyclerView);
+        progressBar = findViewById(R.id.progressBar);
+        messageTextView = findViewById(R.id.messageTextView);
+
         productsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         registerForContextMenu(productsRecyclerView);
 
-        getProducts();
+        productAdapter = new ProductAdapter(this, new ArrayList<>());
+        productsRecyclerView.setAdapter(productAdapter);
+
+        FloatingActionButton addProductFab = findViewById(R.id.addProductFab);
+        addProductFab.setOnClickListener(view -> {
+            Intent intent = new Intent(MainActivity.this, AddProductActivity.class);
+            startActivity(intent);
+        });
+
     }
 
     @Override
@@ -42,39 +60,50 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getProducts() {
+        showLoading(true);
+
         FakeStoreApiService apiService = ApiClient.getClient().create(FakeStoreApiService.class);
         Call<List<Product>> call = apiService.getProducts();
 
         call.enqueue(new Callback<List<Product>>() {
             @Override
             public void onResponse(@NonNull Call<List<Product>> call, @NonNull Response<List<Product>> response) {
+                showLoading(false);
                 if (response.isSuccessful() && response.body() != null) {
-                    productAdapter = new ProductAdapter(MainActivity.this, response.body());
-                    productsRecyclerView.setAdapter(productAdapter);
+                    if (response.body().isEmpty()) {
+                        showMessage("No products found.");
+                    } else {
+                        productsRecyclerView.setVisibility(View.VISIBLE);
+                        productAdapter.setProducts(response.body());
+                    }
+                } else {
+                    showMessage("Failed to load products. Response code: " + response.code());
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<List<Product>> call, @NonNull Throwable t) {
+                showLoading(false);
                 Log.e("MainActivity", "Error fetching products", t);
+                showMessage("An error occurred: " + t.getMessage());
             }
         });
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main_menu, menu);
-        return true;
+    private void showLoading(boolean isLoading) {
+        if (isLoading) {
+            progressBar.setVisibility(View.VISIBLE);
+            messageTextView.setVisibility(View.GONE);
+            productsRecyclerView.setVisibility(View.GONE);
+        } else {
+            progressBar.setVisibility(View.GONE);
+        }
     }
 
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == R.id.add_product) {
-            Intent intent = new Intent(this, AddProductActivity.class);
-            startActivity(intent);
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
+    private void showMessage(String message) {
+        productsRecyclerView.setVisibility(View.GONE);
+        messageTextView.setVisibility(View.VISIBLE);
+        messageTextView.setText(message);
     }
 
     @Override

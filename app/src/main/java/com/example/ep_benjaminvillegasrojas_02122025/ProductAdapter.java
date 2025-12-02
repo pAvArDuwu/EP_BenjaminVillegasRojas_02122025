@@ -67,6 +67,11 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
         return productList.get(position);
     }
 
+    public void setProducts(List<Product> products) {
+        this.productList = products;
+        notifyDataSetChanged();
+    }
+
     public static class ProductViewHolder extends RecyclerView.ViewHolder implements View.OnCreateContextMenuListener {
 
         ImageView productImage;
